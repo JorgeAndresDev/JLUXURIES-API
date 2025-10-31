@@ -20,6 +20,24 @@ def get_luxuries_service():
         if connection:             
             connection.close()
 
+def get_item_service():
+    try:
+        connection = conexiondb()
+        if connection:
+            with connection.cursor(dictionary=True) as cursor:
+                cursor.execute("SELECT idProducts, ProductsName, Quantity, Price, Color FROM products")
+                items = cursor.fetchall()  # Trae todos los registros
+                return items
+        else:
+            return None
+    except Exception as e:
+        print(f"Error en la función get_item_service: {e}")
+        return None
+    finally:
+        if connection:
+            connection.close()
+
+
 def register_luxury_service(luxury: LuxuryItemCreate):
     try:
         connection = conexiondb()
@@ -48,7 +66,7 @@ def update_luxury_service (luxury: LuxuryItemUpdate):
         return {"mensaje": "Item actualizado correctamente"}
     except Exception as e:
         print(f"Error en update_luxury_service: {e}")
-        return 
+        return {"mensaje": "Item actualizado correctamente"}
     
 def delete_luxury_service(idProducts: LuxuryItem):
     try:

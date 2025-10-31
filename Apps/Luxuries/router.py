@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 
 from Apps.Luxuries.schemas import LuxuryItem, LuxuryItemCreate, LuxuryItemUpdate
-from Apps.Luxuries.services import delete_luxury_service, get_luxuries_service, register_luxury_service, update_luxury_service
+from Apps.Luxuries.services import delete_luxury_service, get_item_service, get_luxuries_service, register_luxury_service, update_luxury_service
 
 
 router = APIRouter(prefix="/luxuries", tags=["Luxuries"])
@@ -39,3 +39,10 @@ async def delete_luxury(idProducts: int):
         return response
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/get_all_item", summary="Obtener todos los items")
+def get_all_client():
+    item = get_item_service()
+    if item is None or len(item) == 0:
+        raise HTTPException(status_code=404, detail="No hay items registrados")
+    return item
