@@ -30,24 +30,41 @@ def login_service(email: str, password: str):
             cursor.execute("SELECT * FROM clientes WHERE email = %s", (email,))
             user = cursor.fetchone()
 
+            # ✅ Validar si el usuario existe
             if not user:
-                raise HTTPException(status_code=400, detail="Usuario no encontrado")
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Usuario no encontrado"
+                )
 
-            # Verificar contraseña
+            # ✅ Validar contraseña
             if not verificar_password(password, user["password"]):
-                raise HTTPException(status_code=400, detail="Contraseña incorrecta")
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Contraseña incorrecta"
+                )
 
-            # Crear token
+            # ✅ Crear el token JWT
             access_token_expires = timedelta(minutes=60)
-            access_token = crear_token(data={"sub": user["email"]}, expires_delta=access_token_expires)
+            access_token = crear_token(
+                data={"sub": user["email"]},
+                expires_delta=access_token_expires
+            )
 
-            return {"access_token": access_token, "token_type": "bearer"}
+            return {
+                "access_token": access_token,
+                "token_type": "bearer",
+                "usuario": user["nombre"]
+            }
 
+    except HTTPException:
+        # Re-lanzamos excepciones controladas
+        raise
     except Exception as e:
+        # Cualquier otro error inesperado
         raise HTTPException(status_code=500, detail=f"Error interno: {e}")
     finally:
         connection.close()
-
 
 
 # --- REGISTRO ---
@@ -90,3 +107,5 @@ def obtener_todos_los_clientes_service(usuario: str = Depends(obtener_usuario_ac
         return {"mensaje": "Clientes obtenidos correctamente", "clientes": clientes}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al obtener clientes: {e}")
+
+
