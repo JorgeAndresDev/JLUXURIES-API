@@ -5,6 +5,8 @@ class LuxuryItemCreate(BaseModel):
     Quantity: int
     Price: float
     color: str
+    descripcion: str
+    categoria: str  
 
 class LuxuryItemUpdate(BaseModel):
     idProducts: int
@@ -12,6 +14,8 @@ class LuxuryItemUpdate(BaseModel):
     Quantity: int
     Price: float
     color: str
+    descripcion: str
+    categoria: str  
 
 class LuxuryItem(LuxuryItemCreate):
     idProducts: int

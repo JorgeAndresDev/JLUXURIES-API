@@ -8,7 +8,7 @@ def get_luxuries_service():
         connection = conexiondb()
         if connection:
             with connection.cursor(dictionary=True) as cursor:
-                cursor.execute("SELECT idProducts, ProductsName, Quantity, Price FROM products")
+                cursor.execute("SELECT idProducts, ProductsName, Quantity,color,descripcion, categoria, Price FROM products")
                 jluxuries = cursor.fetchall()
                 return jluxuries
         else: 
@@ -25,7 +25,7 @@ def get_item_service():
         connection = conexiondb()
         if connection:
             with connection.cursor(dictionary=True) as cursor:
-                cursor.execute("SELECT idProducts, ProductsName, Quantity, Price, Color FROM products")
+                cursor.execute("SELECT idProducts, ProductsName, Quantity,color,descripcion, categoria, Price FROM products")
                 items = cursor.fetchall()  # Trae todos los registros
                 return items
         else:
@@ -43,22 +43,22 @@ def register_luxury_service(luxury: LuxuryItemCreate):
         connection = conexiondb()
         if connection:
             with connection.cursor() as cursor:
-                sql = "INSERT INTO products (ProductsName, Quantity, Price, color) VALUES (%s, %s, %s, %s)"
-                values = (luxury.ProductsName, luxury.Quantity, luxury.Price, luxury.color)
+                sql = "INSERT INTO products (ProductsName, Quantity, Price, color, descripcion, categoria) VALUES (%s, %s, %s, %s, %s, %s)"
+                values = (luxury.ProductsName, luxury.Quantity, luxury.Price, luxury.color, luxury.descripcion, luxury.categoria)
                 cursor.execute(sql, values)
                 connection.commit()
                 return cursor.lastrowid  # id autogenerado
     finally:
         if connection:
             connection.close()
-
-def update_luxury_service (luxury: LuxuryItemUpdate):
+def update_luxury_service(luxury: LuxuryItemUpdate):
     try:
         conexion = conexiondb()
         cursor = conexion.cursor()
         cursor.execute(
-            "UPDATE products SET ProductsName = %s, Quantity = %s, Price = %s, color = %s WHERE idProducts = %s",
-            (luxury.ProductsName, luxury.Quantity, luxury.Price, luxury.color, luxury.idProducts)
+            "UPDATE products SET ProductsName = %s, Quantity = %s, Price = %s, color = %s, descripcion = %s, categoria = %s WHERE idProducts = %s",
+            (luxury.ProductsName, luxury.Quantity, luxury.Price, luxury.color, luxury.descripcion, luxury.categoria, luxury.idProducts)
+          
         )
         conexion.commit()
         cursor.close()
@@ -66,7 +66,7 @@ def update_luxury_service (luxury: LuxuryItemUpdate):
         return {"mensaje": "Item actualizado correctamente"}
     except Exception as e:
         print(f"Error en update_luxury_service: {e}")
-        return {"mensaje": "Item actualizado correctamente"}
+        return {"mensaje": f"Error al actualizar: {str(e)}"}  # ← También corrígelo aquí
     
 def delete_luxury_service(idProducts: LuxuryItem):
     try:
