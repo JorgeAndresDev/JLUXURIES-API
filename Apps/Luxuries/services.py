@@ -8,7 +8,7 @@ def get_luxuries_service():
         connection = conexiondb()
         if connection:
             with connection.cursor(dictionary=True) as cursor:
-                cursor.execute("SELECT idProducts, ProductsName, Quantity,color,descripcion, categoria, Price FROM products")
+                cursor.execute("SELECT idProducts, ProductsName, moto, categoria, Quantity, color, Description, Price, image_url FROM products")
                 jluxuries = cursor.fetchall()
                 return jluxuries
         else: 
@@ -20,14 +20,20 @@ def get_luxuries_service():
         if connection:             
             connection.close()
 
-def get_item_service():
+def get_item_service(idProducts: int):
     try:
         connection = conexiondb()
         if connection:
             with connection.cursor(dictionary=True) as cursor:
-                cursor.execute("SELECT idProducts, ProductsName, Quantity,color,descripcion, categoria, Price FROM products")
-                items = cursor.fetchall()  # Trae todos los registros
-                return items
+                sql = """
+                SELECT idProducts, ProductsName, moto, categoria, Quantity, 
+                       color, Description, Price, image_url 
+                FROM products 
+                WHERE idProducts = %s
+                """
+                cursor.execute(sql, (idProducts,))
+                item = cursor.fetchone()
+                return item
         else:
             return None
     except Exception as e:
@@ -37,38 +43,72 @@ def get_item_service():
         if connection:
             connection.close()
 
-
 def register_luxury_service(luxury: LuxuryItemCreate):
     try:
         connection = conexiondb()
         if connection:
             with connection.cursor() as cursor:
-                sql = "INSERT INTO products (ProductsName, Quantity, Price, color, descripcion, categoria) VALUES (%s, %s, %s, %s, %s, %s)"
-                values = (luxury.ProductsName, luxury.Quantity, luxury.Price, luxury.color, luxury.descripcion, luxury.categoria)
+                sql = """
+                INSERT INTO products 
+                (ProductsName, moto, categoria, Quantity, Price, color, Description, image_url)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                """
+                values = (
+                    luxury.ProductsName,
+                    luxury.moto,
+                    luxury.categoria,
+                    luxury.Quantity,
+                    luxury.Price,
+                    luxury.color,
+                    luxury.Description,
+                    luxury.image_url
+                )
                 cursor.execute(sql, values)
                 connection.commit()
-                return cursor.lastrowid  # id autogenerado
+                return cursor.lastrowid
     finally:
         if connection:
             connection.close()
-def update_luxury_service(luxury: LuxuryItemUpdate):
+
+
+def update_luxury_service(idProducts: int, luxury: LuxuryItemUpdate):
     try:
         conexion = conexiondb()
         cursor = conexion.cursor()
-        cursor.execute(
-            "UPDATE products SET ProductsName = %s, Quantity = %s, Price = %s, color = %s, descripcion = %s, categoria = %s WHERE idProducts = %s",
-            (luxury.ProductsName, luxury.Quantity, luxury.Price, luxury.color, luxury.descripcion, luxury.categoria, luxury.idProducts)
-          
-        )
+
+        # Convertir el modelo a dict y filtrar solo los campos no nulos
+        data = {field: value for field, value in luxury.dict().items() if value is not None}
+
+        if not data:
+            return {"mensaje": "No hay campos para actualizar"}
+
+        # Construir el SQL dinámicamente
+        set_clause = ", ".join([f"{field} = %s" for field in data.keys()])
+        values = list(data.values()) + [idProducts]
+
+        sql = f"UPDATE products SET {set_clause} WHERE idProducts = %s"
+
+        cursor.execute(sql, values)
         conexion.commit()
-        cursor.close()
-        conexion.close()
+
+        if cursor.rowcount == 0:
+            return {"mensaje": "No se encontró el producto o no hubo cambios"}
+
         return {"mensaje": "Item actualizado correctamente"}
+
     except Exception as e:
         print(f"Error en update_luxury_service: {e}")
-        return {"mensaje": f"Error al actualizar: {str(e)}"}  # ← También corrígelo aquí
+        return {"mensaje": f"Error al actualizar: {str(e)}"}
+
+    finally:
+        try:
+            cursor.close()
+            conexion.close()
+        except:
+            pass
+
     
-def delete_luxury_service(idProducts: LuxuryItem):
+def delete_luxury_service(idProducts: int):
     try:
         conexion = conexiondb()
         cursor = conexion.cursor()
@@ -80,5 +120,3 @@ def delete_luxury_service(idProducts: LuxuryItem):
         return {"mensaje": "Item eliminado correctamente"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-    
-

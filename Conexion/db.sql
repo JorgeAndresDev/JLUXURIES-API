@@ -12,6 +12,7 @@ CREATE TABLE clientes (
   password VARCHAR(255) NOT NULL,
   telefono VARCHAR(20),
   direccion VARCHAR(255),
+  role ENUM('admin', 'client') DEFAULT 'client',
   fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id_cliente)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
@@ -21,6 +22,8 @@ DROP TABLE IF EXISTS products;
 CREATE TABLE products (
   idProducts INT NOT NULL AUTO_INCREMENT,
   ProductsName VARCHAR(100) NOT NULL,
+  categoria VARCHAR(100),
+  moto VARCHAR(100),
   Description TEXT,
   Quantity INT NOT NULL,
   Price DECIMAL(10,2) NOT NULL,
@@ -61,4 +64,15 @@ VALUES
 (1, 1, 2, 85000),
 (1, 2, 1, 25000);
 
-emailfecha_creacionidProducts
+
+DROP TABLE IF EXISTS audit_logs;
+
+CREATE TABLE audit_logs (
+    id_log INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    action VARCHAR(255) NOT NULL,
+    details TEXT,
+    ip_address VARCHAR(45),
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES clientes(id_cliente)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;

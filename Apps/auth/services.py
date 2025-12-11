@@ -1,25 +1,21 @@
 from datetime import timedelta
 from fastapi import Depends, HTTPException, status
 from jose import JWTError, jwt
-from fastapi.security import OAuth2PasswordBearer
 from Apps.auth.auth import ALGORITHM, SECRET_KEY, crear_token, verificar_password, hash_password
 from Conexion.conexion import conexiondb
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi import Depends
+from Apps.auth.auth import (
+    crear_token,
+    verificar_password,
+    hash_password,
+    get_current_user
+)
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login", scheme_name="JWT")
+
 security = HTTPBearer()
 
-def obtener_usuario_actual(credentials: HTTPAuthorizationCredentials = Depends(security)):
-    token = credentials.credentials
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        email: str = payload.get("sub")
-        if email is None:
-            raise HTTPException(status_code=401, detail="Token inválido")
-        return email
-    except JWTError:
-        raise HTTPException(status_code=401, detail="Token expirado o inválido")
+# obtener_usuario_actual removed in favor of auth.get_current_user
 
 
 # --- LOGIN ---
@@ -54,7 +50,14 @@ def login_service(email: str, password: str):
             return {
                 "access_token": access_token,
                 "token_type": "bearer",
-                "usuario": user["nombre"]
+                "usuario": {
+                    "id_cliente": user["id_cliente"],
+                    "email": user["email"],
+                    "nombre": user["nombre"],
+                    "telefono": user.get("telefono"),
+                    "direccion": user.get("direccion"),
+                    "role": user.get("role")
+                }
             }
 
     except HTTPException:
@@ -68,14 +71,14 @@ def login_service(email: str, password: str):
 
 
 # --- REGISTRO ---
-def registrar_cliente(nombre: str, email: str, password: str):
+def registrar_cliente(nombre: str, email: str, password: str, telefono: str = None, direccion: str = None):
     connection = conexiondb()
     try:
         with connection.cursor() as cursor:
             hashed = hash_password(password)
             cursor.execute(
-                "INSERT INTO clientes (nombre, email, password) VALUES (%s, %s, %s)",
-                (nombre, email, hashed)
+                "INSERT INTO clientes (nombre, email, password, telefono, direccion, role) VALUES (%s, %s, %s, %s, %s, %s)",
+                (nombre, email, hashed, telefono, direccion, 'client')
             )
             connection.commit()
         return {"message": "Cliente registrado correctamente"}
@@ -94,7 +97,9 @@ def obtener_todos_los_clientes():
 
 
 
-def obtener_todos_los_clientes_service(usuario: str = Depends(obtener_usuario_actual)):
+from Apps.auth.auth import get_current_admin
+
+def obtener_todos_los_clientes_service(usuario: dict = Depends(get_current_admin)):
     """
     Devuelve todos los clientes registrados (protegido con token)
     """
