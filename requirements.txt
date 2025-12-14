@@ -11,9 +11,9 @@ fastapi==0.116.1
 greenlet==3.2.4
 h11==0.16.0
 idna==3.10
-mysql==0.0.3
-mysql-connector-python==9.4.0
-mysqlclient==2.2.7
+# mysql==0.0.3  <-- Considera eliminar este, es una envoltura genérica muy antigua.
+# mysql-connector-python==9.4.0 <-- Puedes mantenerlo, pero si usas PyMySQL, no es necesario.
+# mysqlclient==2.2.7 <-- ELIMINADO
 passlib==1.7.4
 pyasn1==0.6.1
 pycparser==2.23
